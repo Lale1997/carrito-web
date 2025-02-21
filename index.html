@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .container { max-width: 600px; margin: auto; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container" id="fase1">
+        <h2>Listado de Productos</h2>
+        <div id="productos"></div>
+        <button onclick="mostrarFase(2)">Finalizar Pedido</button>
+    </div>
+    
+    <div class="container hidden" id="fase2">
+        <h2>Resumen del Pedido</h2>
+        <div id="resumen"></div>
+        <button onclick="mostrarFase(1)">Volver</button>
+        <button onclick="mostrarFase(3)">Continuar</button>
+    </div>
+    
+    <div class="container hidden" id="fase3">
+        <h2>Datos del Comprador</h2>
+        <input type="text" id="nombre" placeholder="Nombre" required><br>
+        <input type="text" id="apellido" placeholder="Apellido" required><br>
+        <input type="text" id="dni" placeholder="DNI" required><br>
+        <input type="text" id="domicilio" placeholder="Domicilio" required><br>
+        <select id="entrega">
+            <option value="Entrega">Entrega</option>
+            <option value="Retiro">Retiro</option>
+        </select><br>
+        <input type="text" id="telefono" placeholder="Teléfono" required><br>
+        <button onclick="enviarPedido()">Enviar Pedido por WhatsApp</button>
+    </div>
+
+    <script>
+        let carrito = [];
+        const productos = [
+            { id: 1, nombre: "Coca Cola", precio: 1500 },
+            { id: 2, nombre: "Fernet", precio: 5000 },
+            { id: 3, nombre: "Hielo", precio: 800 }
+        ];
+        
+        function mostrarProductos() {
+            let html = "";
+            productos.forEach(p => {
+                html += `<div>
+                    <p>${p.nombre} - $${p.precio}</p>
+                    <button onclick="modificarCantidad(${p.id}, -1)">-</button>
+                    <span id="cant${p.id}">0</span>
+                    <button onclick="modificarCantidad(${p.id}, 1)">+</button>
+                </div>`;
+            });
+            document.getElementById("productos").innerHTML = html;
+        }
+        
+        function modificarCantidad(id, cambio) {
+            let item = carrito.find(i => i.id === id);
+            if (!item) {
+                item = productos.find(p => p.id === id);
+                carrito.push({ ...item, cantidad: 0 });
+            }
+            item.cantidad = Math.max(0, item.cantidad + cambio);
+            document.getElementById(`cant${id}`).innerText = item.cantidad;
+        }
+        
+        function mostrarFase(fase) {
+            document.getElementById("fase1").classList.add("hidden");
+            document.getElementById("fase2").classList.add("hidden");
+            document.getElementById("fase3").classList.add("hidden");
+            document.getElementById(`fase${fase}`).classList.remove("hidden");
+            if (fase === 2) mostrarResumen();
+        }
+        
+        function mostrarResumen() {
+            let resumen = carrito.filter(i => i.cantidad > 0).map(i => `${i.nombre} x${i.cantidad} - $${i.precio * i.cantidad}`).join("\n");
+            document.getElementById("resumen").innerText = resumen;
+        }
+        
+        function enviarPedido() {
+            let nombre = document.getElementById("nombre").value;
+            let apellido = document.getElementById("apellido").value;
+            let dni = document.getElementById("dni").value;
+            let domicilio = document.getElementById("domicilio").value;
+            let entrega = document.getElementById("entrega").value;
+            let telefono = document.getElementById("telefono").value;
+            
+            let pedido = carrito.filter(i => i.cantidad > 0).map(i => `${i.nombre} x${i.cantidad}`).join(", ");
+            let mensaje = `Pedido:%0A${pedido}%0A%0ACliente:%0A${nombre} ${apellido}%0ADNI: ${dni}%0ADomicilio: ${domicilio}, ${entrega}%0ATeléfono: ${telefono}`;
+            
+            let url = `https://wa.me/5493416700132?text=${mensaje}`;
+            window.open(url, "_blank");
+        }
+        
+        mostrarProductos();
+    </script>
+</body>
+</html>
